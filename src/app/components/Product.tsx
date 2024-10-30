@@ -1,5 +1,5 @@
 "use client"
-import React, { useActionState, useState } from 'react'
+import React, { useActionState, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { productSchema } from '@/lib/productSchema'
@@ -9,71 +9,52 @@ import { useFormState } from 'react-dom'
 import { DataState, s3UploadDatabase } from '@/actions/s3UploadDB'
 
 function Product() {
-    const formState:DataState = {
-        message:"",
-        errors:{
-            productName:"",
-            productDescription:"",
-            productPrice:"",
-            productImage: [] as File[],
+    const formState: DataState = {
+        message: "",
+        errors: {
+            productName: "",
+            productDescription: "",
+            productPrice: "",
+            productImage: "",
         }
     }
-    const[state , formAction, isPending] = useActionState<DataState, FormData>(s3UploadDatabase, formState)
+    const [state, formAction, isPending] = useActionState<DataState, FormData>(s3UploadDatabase, formState)
     const [filesData, setFilesData] = useState<{ file: File; previewUrl: string }[]>([]);
 
-    const toSubmit = async (data: z.output<typeof productSchema>) => {
-        console.log("Enter");
-        const validFiles = filesData.map(data => data.file);
-
-        const submissionData = {
-            ...data,
-            productImage: validFiles,
-        };
-
-        try {
-            console.log("Simulating form submission...");
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-            const formData = new FormData();
-            validFiles.forEach((file, index) => {
-                formData.append(`productImage_${index}`, file);
-            });
-
-            const sendData = await fetch("api/s3Upload", {
-                method: "POST",
-                body: formData
-            })
-            console.log('Form submitted successfully:', sendData);
-        } catch (error) {
-            console.error('Submission error:', error);
-        }
-    };
     const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
+
+        const files = Array.from(e.target.files || []).filter(
+            file => file.size > 0 && ["image/jpeg", "image/jpg", "image/png", "image/gif"].includes(file.type)
+        );
+        console.log("These is image files array", files)
 
         const updatedFilesData = files.map(file => ({
             file,
             previewUrl: URL.createObjectURL(file),
         }));
-
-        setFilesData(updatedFilesData);
-        if (updatedFilesData.length > 0) {
-            setValue("productImage", [updatedFilesData[0].file, ...updatedFilesData.slice(1).map(data => data.file)]);  
-        } else {
-            setValue("productImage", [new File([], "")]); 
-        }
+        console.log("These is upadted file data", updatedFilesData)
+        setFilesData(updatedFilesData)
     };
-
+    useEffect(() => {
+        if (state.message === "Upload successful") {
+            setFilesData([]); // Clear the filesData state
+        }
+    }, [state.message]);
     const { register,
         setValue,
-
+        handleSubmit,
         formState: { errors, isSubmitting } } =
         useForm<z.output<typeof productSchema>>({ resolver: zodResolver(productSchema) });
+    
+    
+
     return (
         <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8">
             <div className='font-bold text-center text-xl'>
                 Enter Product Details
             </div>
-            <form action={formAction} className="mx-auto mb-0 mt-8 max-w-md space-y-4 text-black">
+            <p className='text-center my-3 text-sm text-neutral-500'>Upload your product images to AWS S3</p>
+            <form action={formAction}  className="mx-auto mb-0 mt-8 max-w-md space-y-4 text-black">
                 <div>
                     <div className="relative">
                         <input
@@ -84,7 +65,7 @@ function Product() {
                         />
                     </div>
                 </div>
-                {errors.productName && (<p className='text-red-500 text-xs'>{`${errors.productName.message}`}</p>)}
+                {state.errors.productName && (<p className='text-red-500 text-xs'>{`${state.errors.productName}`}</p>)}
                 <div>
                     <div className="relative">
                         <textarea
@@ -96,7 +77,7 @@ function Product() {
                         ></textarea>
                     </div>
                 </div>
-                {errors.productDescription && (<p className='text-red-500 text-xs'>{`${errors.productDescription.message}`}</p>)}
+                {state.errors.productDescription && (<p className='text-red-500 text-xs'>{`${state.errors.productDescription}`}</p>)}
                 <div>
                     <div className="relative">
                         <input
@@ -108,7 +89,7 @@ function Product() {
                         />
                     </div>
                 </div>
-                {errors.productPrice && (<p className='text-red-500 text-xs'>{`${errors.productPrice.message}`}</p>)}
+                {state.errors.productPrice && (<p className='text-red-500 text-xs'>{`${state.errors.productPrice}`}</p>)}
 
                 <div className='flex items-center justify-center w-full bg-yellow-200 rounded-lg py-10'>
                     <label htmlFor="productImage">
@@ -121,14 +102,14 @@ function Product() {
                     <input
                         className='hidden'
                         id='productImage'
-                        type='file'
+                        type="file"
                         {...register("productImage")}
                         onChange={handleImage}
-                        accept='image/jpg, image/jpeg, image/png, image/gif'
+                        accept='image/*'
                         multiple
                     />
                 </div>
-                {errors.productImage && (<p className='text-red-500 text-xs'>{`${errors.productImage.message}`}</p>)}
+                {state.errors.productImage && (<p className='text-red-500 text-xs'>{`${state.errors.productImage}`}</p>)}
 
                 {filesData.length > 0 && (
                     <div className="mt-4">

@@ -16,15 +16,14 @@ export const productSchema = z.object({
     productDescription: z.string().min(10, {
         message: "Product description should be atleast 10 characters long",
     }).trim(),
-    productPrice: z.string().refine((value) => !isNaN(Number(value)), {
+    productPrice: z.string().min(1,{
+      message: "Atleast 1 Rupee price is required"
+    }).refine((value) => !isNaN(Number(value)), {
         message: "The Input must be a valid string number",
     }).transform((value) => Number(value)).refine((value) => value > 0, {
         message: "The price must be a positive number",
     }),
-    // productPrice: z.number().positive({
-    //     message: "The price must be a positive number",
-    // }),
     productImage: z
     .array(fileSchema)
-    .nonempty({ message: "At least one image file is required" }),  
+    .min(1, { message: "At least one image file is required" }),  
 })
