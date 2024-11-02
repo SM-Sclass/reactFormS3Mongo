@@ -36,14 +36,13 @@ function Product() {
         setFilesData(updatedFilesData)
     };
     useEffect(() => {
-        if (state.message === "Upload successful") {
-            setFilesData([]); // Clear the filesData state
-        }
+            setFilesData([]); 
     }, [state.message]);
+
     const { register,
         setValue,
         handleSubmit,
-        formState: { errors, isSubmitting } } =
+        } =
         useForm<z.output<typeof productSchema>>({ resolver: zodResolver(productSchema) });
     
     
@@ -54,6 +53,8 @@ function Product() {
                 Enter Product Details
             </div>
             <p className='text-center my-3 text-sm text-neutral-500'>Upload your product images to AWS S3</p>
+            {state.message === "Upload successful" ? (<p className='text-center text-green-600'> Product created successfully</p>):
+            (<p className='text-center text-red-500'>{state.message}</p>)}
             <form action={formAction}  className="mx-auto mb-0 mt-8 max-w-md space-y-4 text-black">
                 <div>
                     <div className="relative">
@@ -91,8 +92,8 @@ function Product() {
                 </div>
                 {state.errors.productPrice && (<p className='text-red-500 text-xs'>{`${state.errors.productPrice}`}</p>)}
 
-                <div className='flex items-center justify-center w-full bg-yellow-200 rounded-lg py-10'>
-                    <label htmlFor="productImage">
+                <div className='flex items-center justify-center w-full bg-yellow-200 rounded-lg cursor-pointer'>
+                    <label htmlFor="productImage" className='cursor-pointer my-5'>
                         <div className='flex flex-col items-center gap-y-1 w-full'>
                             <Image className='' src="./upload.svg" alt='upload' width={30} height={30} />
                             <p className='text-gray-500 text-sm'> <span className='font-bold'>click to upload</span> or drag and drop images</p>
@@ -100,7 +101,7 @@ function Product() {
                         </div>
                     </label>
                     <input
-                        className='hidden'
+                        className='hidden cursor-pointer'
                         id='productImage'
                         type="file"
                         {...register("productImage")}
