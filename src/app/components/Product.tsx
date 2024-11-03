@@ -5,8 +5,8 @@ import { useForm } from 'react-hook-form'
 import { productSchema } from '@/lib/productSchema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useFormState } from 'react-dom'
 import { DataState, s3UploadDatabase } from '@/actions/s3UploadDB'
+import Link from 'next/link'
 
 function Product() {
     const formState: DataState = {
@@ -36,26 +36,39 @@ function Product() {
         setFilesData(updatedFilesData)
     };
     useEffect(() => {
-            setFilesData([]); 
+        setFilesData([]);
     }, [state.message]);
 
     const { register,
         setValue,
         handleSubmit,
-        } =
+    } =
         useForm<z.output<typeof productSchema>>({ resolver: zodResolver(productSchema) });
-    
-    
+
+
 
     return (
-        <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-screen-xl px-4 pb-16 sm:px-6 lg:px-8">
+            <div className="flex justify-end items-center mb-3">
+                <Link href="/products">
+                <div className="p-1 rounded-md bg-gradient-to-r from-[#122aa6] via-[#f043e4] to-[#f61047] w-fit">
+                    <button className="px-4 py-2 bg-black text-gray-500 font-semibold rounded-md hover:text-white transition duration-150">
+                        Products
+                    </button>
+                </div>
+                </Link>
+                
+            </div>
+
+
+
             <div className='font-bold text-center text-xl'>
                 Enter Product Details
             </div>
             <p className='text-center my-3 text-sm text-neutral-500'>Upload your product images to AWS S3</p>
-            {state.message === "Upload successful" ? (<p className='text-center text-green-600'> Product created successfully</p>):
-            (<p className='text-center text-red-500'>{state.message}</p>)}
-            <form action={formAction}  className="mx-auto mb-0 mt-8 max-w-md space-y-4 text-black">
+            {state.message === "Upload successful" ? (<p className='text-center text-green-600'> Product created successfully</p>) :
+                (<p className='text-center text-red-500'>{state.message}</p>)}
+            <form action={formAction} className="mx-auto mb-0 mt-8 max-w-md space-y-4 text-black">
                 <div>
                     <div className="relative">
                         <input

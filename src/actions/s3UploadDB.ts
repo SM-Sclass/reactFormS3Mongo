@@ -2,6 +2,7 @@
 import { productSchema } from "@/lib/productSchema";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { ZodError } from "zod";
+import { createProducts } from "./productUpload";
 
 export type DataState = {
     message: string;
@@ -23,8 +24,9 @@ const AWSClient = new S3Client({
 })
 
 async function uploadToS3(files: File[], productName: string) {
+    const imgURL = `https://nextform.s3.eu-north-1.amazonaws.com/`;
     const uploadPromises = [];
-    
+    const imgURLs = [] as string[];
     for (const file of files) {
         const buffer = Buffer.from(await file.arrayBuffer()); 
 
@@ -34,18 +36,17 @@ async function uploadToS3(files: File[], productName: string) {
         Body: buffer,
         ContentType: file.type,
         };
-
+        const imageUrl = `${imgURL}productImages/${productName}/${file.name}`;
+        imgURLs.push(imageUrl);
         uploadPromises.push(AWSClient.send(new PutObjectCommand(uploadParams)));
     }
 
     try {
         const responses = await Promise.all(uploadPromises);
-        console.log("All images uploaded successfully:", responses);
-        const imgURL = `https://nextform.s3.eu-north-1.amazonaws.com/${productName}/`;
-        return imgURL;
+        return imgURLs;
     } catch (error) {
         console.error("Error uploading to S3:", error);
-        
+        return [];
     }
 }
 
@@ -61,14 +62,17 @@ export async function s3UploadDatabase(state: DataState, formData: FormData) {
             plainObject[key] = value;
         }
     });
-
-
-
     try {
 
         productSchema.parse(plainObject);  
         const productImg = formData.getAll("productImage") as File[];
-        uploadToS3(productImg, plainObject.productName);
+        const imgURLArray= await uploadToS3(productImg, plainObject.productName);
+        await createProducts({
+            productName: plainObject.productName,
+            productDescription: plainObject.productDescription,
+            productPrice: plainObject.productPrice,
+            productImage: imgURLArray!,
+        });
         return {
             message: "Upload successful",
             errors: {
