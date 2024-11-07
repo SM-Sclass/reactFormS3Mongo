@@ -85,7 +85,6 @@ export async function s3UploadDatabase(state: DataState, formData: FormData) {
     } catch (error: any) {
 
         if (error instanceof ZodError) {
-            // Flatten the Zod errors and map each field error
             const formValidationErrors = error.flatten().fieldErrors;
             return {
                 message: "Validation failed",
@@ -97,7 +96,7 @@ export async function s3UploadDatabase(state: DataState, formData: FormData) {
                 },
             };
         }
-        throw error; // Throw if it's a different error type
+        throw error; 
     }
 
 }
